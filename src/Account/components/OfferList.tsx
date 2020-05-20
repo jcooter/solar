@@ -151,8 +151,8 @@ interface Props {
 }
 
 function OfferList(props: Props & { sendTransaction: (tx: Transaction) => Promise<void> }) {
-  const accountData = useLiveAccountData(props.account.publicKey, props.account.testnet)
-  const offers = useLiveAccountOffers(props.account.publicKey, props.account.testnet)
+  const accountData = useLiveAccountData(props.account.accountID, props.account.testnet)
+  const offers = useLiveAccountOffers(props.account.accountID, props.account.testnet)
   const horizon = useHorizon(props.account.testnet)
 
   const onCancel = async (offer: ServerApi.OfferRecord) => {
@@ -175,7 +175,7 @@ function OfferList(props: Props & { sendTransaction: (tx: Transaction) => Promis
         {offers.map(offer => (
           <OfferListItem
             key={offer.id}
-            accountPublicKey={props.account.publicKey}
+            accountPublicKey={props.account.accountID}
             offer={offer}
             onCancel={() => onCancel(offer)}
           />
