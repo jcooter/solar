@@ -14,6 +14,7 @@ import { Account } from "~App/contexts/accounts"
 import { WrongPasswordError, CustomError } from "./errors"
 import { applyTimeout } from "./promise"
 import { getAllSources, isNotFoundError, isSignedByAnyOf, selectSmartTransactionFee, SmartFeePreset } from "./stellar"
+import { MultisigTransactionResponse } from "./multisig-service"
 
 // See <https://github.com/stellar/go/issues/926>
 const highFeePreset: SmartFeePreset = {
@@ -45,13 +46,22 @@ function fail(message: string): never {
   throw Error(message)
 }
 
-export function hasSigned(transaction: Transaction, publicKey: string) {
-  return transaction.signatures.some(signature => {
-    const hint = signature.hint()
-    const keypair = Keypair.fromPublicKey(publicKey)
+export function hasSigned(
+  transaction: Transaction,
+  publicKey: string,
+  signatureRequest?: MultisigTransactionResponse | null
+) {
+  const signedAdditionallyBy = signatureRequest?.signed_by || []
 
-    return hint.equals(keypair.rawPublicKey().slice(-hint.byteLength))
-  })
+  return (
+    signedAdditionallyBy.indexOf(publicKey) > -1 ||
+    transaction.signatures.some(signature => {
+      const hint = signature.hint()
+      const keypair = Keypair.fromPublicKey(publicKey)
+
+      return hint.equals(keypair.rawPublicKey().slice(-hint.byteLength))
+    })
+  )
 }
 
 async function accountExists(horizon: Server, publicKey: string) {
@@ -85,7 +95,7 @@ async function selectTransactionFeeWithFallback(horizon: Server, fallbackFee: nu
 
 function selectTransactionTimeout(accountData: Pick<ServerApi.AccountRecord, "signers">): number {
   // Don't forget that we must give the user enough time to enter their password and click ok
-  return accountData.signers.length > 1 ? 30 * 24 * 60 * 60 * 1000 : 90
+  return accountData.signers.length > 1 ? 30 * 24 * 60 * 60 : 90
 }
 
 interface TxBlueprint {
@@ -188,31 +198,12 @@ export async function requiresRemoteSignatures(horizon: Server, transaction: Tra
  */
 export function isPotentiallyDangerousTransaction(
   transaction: Transaction,
-  localAccounts: Array<Pick<ServerApi.AccountRecord, "id" | "signers">>
+  signedBy: string[],
+  trustedPublicKeys: string[]
 ) {
-  const allTxSources = getAllSources(transaction)
-  const localAffectedAccounts = localAccounts.filter(account => allTxSources.indexOf(account.id) > -1)
-
-  const isSignedByLocalAccount = transaction.signatures.some(signature =>
-    isSignedByAnyOf(
-      signature,
-      localAccounts.map(account => account.id)
-    )
-  )
-
-  // Co-signers of local accounts
-  const knownCosigners = localAffectedAccounts.reduce(
-    (signers, affectedAccountData) => [...signers, ...affectedAccountData.signers],
-    [] as ServerApi.AccountRecord["signers"]
-  )
-  const isSignedByKnownCosigner = transaction.signatures.some(signature =>
-    isSignedByAnyOf(
-      signature,
-      knownCosigners.map(cosigner => cosigner.key)
-    )
-  )
-
-  return localAffectedAccounts.length > 0 && !isSignedByLocalAccount && !isSignedByKnownCosigner
+  // We only check the `signedBy` here, we do not actually verify signatures
+  const trustedTxSources = getAllSources(transaction).filter(key => trustedPublicKeys.indexOf(key) > -1)
+  return !trustedTxSources.some(trustedSourceAccountID => signedBy.indexOf(trustedSourceAccountID) > -1)
 }
 
 export function isStellarWebAuthTransaction(transaction: Transaction) {
