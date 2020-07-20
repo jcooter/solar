@@ -13,7 +13,7 @@ import {
 import { Account } from "~App/contexts/accounts"
 import { WrongPasswordError, CustomError } from "./errors"
 import { applyTimeout } from "./promise"
-import { getAllSources, isNotFoundError, isSignedByAnyOf, selectSmartTransactionFee, SmartFeePreset } from "./stellar"
+import { getAllSources, isNotFoundError, selectSmartTransactionFee, SmartFeePreset } from "./stellar"
 import { MultisigTransactionResponse } from "./multisig-service"
 
 // See <https://github.com/stellar/go/issues/926>
