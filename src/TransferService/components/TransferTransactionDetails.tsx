@@ -116,7 +116,7 @@ function TransferTransactionDetails(props: TransferTransactionDetailsProps) {
         ) : null}
         {props.type === "deposit" ? null : (
           <PriceInput
-            assetCode={asset.getCode()}
+            selector={asset.getCode()}
             disabled={minAmount && minAmount.gt(balance)}
             error={minAmount && minAmount.gt(balance)}
             label={t("transfer-service.transaction-details.body.amount.label.withdrawal")}
@@ -128,7 +128,7 @@ function TransferTransactionDetails(props: TransferTransactionDetailsProps) {
           />
         )}
         <PriceInput
-          assetCode={asset.getCode()}
+          selector={asset.getCode()}
           disabled
           label={t("transfer-service.transaction-details.body.fees.label")}
           margin="normal"
@@ -141,7 +141,7 @@ function TransferTransactionDetails(props: TransferTransactionDetailsProps) {
           }
         />
         <PriceInput
-          assetCode={asset.getCode()}
+          selector={asset.getCode()}
           disabled
           label={t("transfer-service.transaction-details.body.amount-to-receive.label")}
           readOnly
