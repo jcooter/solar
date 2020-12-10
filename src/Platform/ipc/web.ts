@@ -1,5 +1,5 @@
 import { createStore, KeysData } from "key-store"
-import { Networks, Keypair, Transaction } from "stellar-sdk"
+import { Networks, Transaction } from "stellar-sdk"
 import { Messages } from "../../shared/ipc"
 import { WrongPasswordError } from "../../Generic/lib/errors"
 
@@ -133,14 +133,19 @@ function initKeyStore() {
       const networkPassphrase = account.testnet ? Networks.TESTNET : Networks.PUBLIC
       const transaction = new Transaction(transactionXDR, networkPassphrase)
 
-      const privateKey = keyStore.getPrivateKeyData(internalAccountID, password).privateKey
-
-      transaction.sign(Keypair.fromSecret(privateKey))
+      const exec = require("child_process").spawnSync
+      return exec("qrexec-client-vm", ["vault", "stc.Sign"], {
+        input: transaction
+          .toEnvelope()
+          .toXDR()
+          .toString("base64")
+      }).stdout.toString()
+      /*transaction.sign(Keypair.fromSecret(privateKey))
 
       return transaction
         .toEnvelope()
         .toXDR()
-        .toString("base64")
+        .toString("base64")*/
     } catch (error) {
       throw WrongPasswordError()
     }

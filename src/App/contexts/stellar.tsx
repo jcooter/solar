@@ -18,7 +18,7 @@ const initialHorizonSelection = (async () => {
   const { netWorker } = await workers
 
   return Promise.all([
-    netWorker.checkHorizonOrFailover("https://stellar-horizon.satoshipay.io/", "https://horizon.stellar.org"),
+    netWorker.checkHorizonOrFailover("http://10.137.0.16:8000/", "http://10.137.0.16:8000"),
     netWorker.checkHorizonOrFailover(
       "https://stellar-horizon-testnet.satoshipay.io/",
       "https://horizon-testnet.stellar.org"
@@ -31,7 +31,7 @@ initialHorizonSelection.catch(trackError)
 const initialValues: ContextType = {
   isSelectionPending: true,
   pendingSelection: initialHorizonSelection,
-  pubnetHorizonURL: "https://stellar-horizon.satoshipay.io/",
+  pubnetHorizonURL: "http://10.137.0.16:8000/",
   testnetHorizonURL: "https://stellar-horizon-testnet.satoshipay.io/"
 }
 
